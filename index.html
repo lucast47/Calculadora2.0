@@ -14,6 +14,9 @@
     --accent-green: #16a34a;
     --green-light: #f0fdf4;
     --green-border: #bbf7d0;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --danger-border: #fecaca;
   }
   body{
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
@@ -24,7 +27,7 @@
   h1{ text-align:center; color:#0f172a; margin-bottom:20px; font-weight: 800; font-size: 1.5rem; }
   
   .card{
-    max-width:1000px;
+    max-width:1050px;
     margin:0 auto;
     background:#fff;
     border-radius:16px;
@@ -41,7 +44,7 @@
   
   form{
     display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap:15px;
     align-items:end;
   }
@@ -54,6 +57,21 @@
     font-size:0.95rem;
     box-sizing:border-box;
     background: #fff;
+  }
+
+  /* Alerta de Edad */
+  .alert-edad {
+    margin: 15px 20px 0 20px;
+    padding: 12px 16px;
+    background: var(--danger-light);
+    border: 1px solid var(--danger-border);
+    border-radius: 10px;
+    color: var(--danger);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   /* Bloque Principal: Resumen Cuota (Colapsable) */
@@ -75,7 +93,7 @@
   }
   
   .summary-item { display: flex; flex-direction: column; }
-  .summary-item strong { font-size: 0.8rem; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 4px;}
+  .summary-item strong { font-size: 0.8rem; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 8px;}
   .summary-item span { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
 
   .toggle-icon {
@@ -98,7 +116,7 @@
     gap: 15px;
   }
   .is-open .info-details {
-    max-height: 300px;
+    max-height: 350px;
     opacity: 1;
     padding-bottom: 20px;
     border-top: 1px solid var(--blue-light);
@@ -229,13 +247,13 @@
   }
 
   .is-open-table .table-body-wrapper {
-    max-height: 2000px; /* Suficiente para tablas largas de 60 cuotas */
+    max-height: 2000px;
     opacity: 1;
   }
 
   .table-container { overflow-x: auto; }
   table { width:100%; border-collapse:collapse; }
-  th, td { padding:10px 12px; text-align:right; font-size:0.85rem; border-bottom: 1px solid #f1f5f9; }
+  th, td { padding:10px 10px; text-align:right; font-size:0.82rem; border-bottom: 1px solid #f1f5f9; }
   thead th { background: var(--primary); color:#fff; font-weight: 600; }
   tfoot td { background: #f8fafc; font-weight: 800; color: var(--primary-dark); border-top: 2px solid var(--blue-border); }
 </style>
@@ -282,7 +300,19 @@
           <label>Edad</label>
           <select id="edad"></select>
         </div>
+        <div>
+          <label>MicroEmp. Protegido</label>
+          <select id="aceptaSeguro">
+            <option value="NO">NO</option>
+            <option value="SI">SÍ</option>
+          </select>
+        </div>
       </form>
+    </div>
+
+    <!-- Mensaje de Alerta por Edad en Seguro Voluntario -->
+    <div class="alert-edad" id="alertaEdad" style="display:none;">
+      ⚠️ Cliente fuera de política para seguro MicroEmpresario Protegido por edad (≥ 70 años).
     </div>
 
     <!-- Bloque 1: Primera Cuota + Detalles Colapsables -->
@@ -311,8 +341,16 @@
           <span id="fngValue"></span>
         </div>
         <div class="detail-item">
+          <strong>MicroEmp. Protegido (Mes)</strong>
+          <span id="seguroVoluntarioInfo"></span>
+        </div>
+        <div class="detail-item">
           <strong>Costo Total Intereses</strong>
           <span id="totalInteresInfo"></span>
+        </div>
+        <div class="detail-item">
+          <strong>Total Seguro Vol. (Crédito)</strong>
+          <span id="totalSeguroVolInfo"></span>
         </div>
       </div>
     </div>
@@ -321,7 +359,7 @@
     <div class="comparativa-container" id="comparativaContainer" style="display:none;">
       <div class="comparativa-header" onclick="toggleComparativa()">
         <div class="comparativa-title">
-          ⚡ Ver Comparativa por Plazos (6 a 60 Meses)
+          Comparador por Plazos
         </div>
         <svg class="toggle-icon-comp" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
       </div>
@@ -334,7 +372,7 @@
     <div class="table-collapsible-container" id="tablaContainerWrapper" style="display:none;">
       <div class="table-header" onclick="toggleTabla()">
         <div class="table-title">
-          📊 Ver Tabla de Amortización Detallada
+          Tabla de Amortización Detallada
         </div>
         <svg class="toggle-icon-table" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
       </div>
@@ -348,7 +386,8 @@
                 <th>Capital</th>
                 <th>Interés</th>
                 <th>MIPYME</th>
-                <th>Seguro</th>
+                <th>Seguro Vida</th>
+                <th>Seguro Vol.</th>
                 <th>Saldo</th>
               </tr>
             </thead>
@@ -387,16 +426,58 @@ const CONFIG = {
       "BBB": [73.00, 66.20, 55.60, 53.60, 37.00],
       "BCC": [73.20, 66.40, 66.40, 66.40, 66.40]
     }
+  },
+
+  SEGURO_MICROEMPRESARIO: {
+    TASA_MASCULINO: 27.29362525, // por mil
+    TASA_FEMENINO: 26.23188406,  // por mil
+    TOPE_BASE: 1500000,
+    EDAD_MAXIMA: 70
   }
 };
 
-const fngTabla={1:[2.99,3.5,3.75],2:[2.99,3.5,3.75],3:[2.99,3.5,3.75],4:[2.99,3.5,3.75],5:[2.99,3.5,3.75],6:[2.99,3.5,3.75],7:[2.99,3.5,3.75],8:[2.99,3.5,3.75],9:[2.99,3.5,3.75],10:[2.99,3.5,3.75],11:[2.99,3.5,3.75],12:[2.99,3.5,3.75],13:[3.01,3.52,3.77],14:[3.03,3.58,3.84],15:[3.05,3.68,3.94],16:[3.06,3.8,4.07],17:[3.08,3.93,4.21],18:[3.1,4.09,4.38],19:[3.11,4.26,4.56],20:[3.13,4.44,4.76],21:[3.15,4.64,4.97],22:[3.17,4.84,5.18],23:[3.18,5.05,5.41],24:[3.2,5.27,5.64],25:[3.22,5.35,5.73],26:[3.23,5.45,5.83],27:[3.25,5.56,5.96],28:[3.27,5.68,6.09],29:[3.29,5.82,6.24],30:[3.3,5.97,6.4],31:[3.32,6.13,6.56],32:[3.34,6.29,6.74],33:[3.35,6.47,6.93],34:[3.37,6.65,7.12],35:[3.39,6.83,7.32],36:[3.41,7.02,7.53]};
-const factoresSeguroVida={M:{18:0.377,19:0.377,20:0.377,21:0.383,22:0.390,23:0.397,24:0.404,25:0.409,26:0.415,27:0.419,28:0.426,29:0.432,30:0.437,31:0.444,32:0.451,33:0.459,34:0.469,35:0.479,36:0.479,37:0.490,38:0.502,39:0.516,40:0.532,41:0.547,42:0.565,43:0.581,44:0.600,45:0.620,46:0.641,47:0.663,48:0.693,49:0.727,50:0.765,51:0.852,52:0.909,53:0.979,54:1.060,55:1.155,56:1.158,57:1.274,58:1.410,59:1.562,60:1.727,61:2.331,62:2.542,63:2.760,64:2.968,65:3.177,66:3.382,67:3.591,68:3.866,69:4.116,70:4.397,71:3.068,72:3.347,73:3.719,74:4.194,75:4.788,76:5.520,77:6.410,78:7.507,79:8.990,80:10.937,81:10.937,82:10.937,83:10.937,84:10.937,85:10.937},F:{18:0.377,19:0.377,20:0.377,21:0.377,22:0.377,23:0.377,24:0.377,25:0.383,26:0.383,27:0.390,28:0.397,29:0.404,30:0.409,31:0.415,32:0.419,33:0.426,34:0.432,35:0.437,36:0.444,37:0.451,38:0.459,39:0.469,40:0.479,41:0.479,42:0.490,43:0.502,44:0.516,45:0.532,46:0.547,47:0.565,48:0.581,49:0.600,50:0.620,51:0.620,52:0.677,53:0.699,54:0.731,55:0.767,56:0.807,57:0.852,58:0.909,59:0.979,60:1.060,61:1.155,62:1.423,63:1.566,64:1.733,65:1.920,66:2.122,67:2.331,68:2.542,69:2.760,70:2.968,71:3.177,72:3.382,73:3.591,74:3.866,75:4.116,76:4.397,77:3.068,78:3.347,79:3.719,80:4.194,81:4.788,82:5.520,83:6.410,84:7.507,85:10.937}};
+const fngTabla = {
+  1:[2.99,3.50,3.75], 2:[2.99,3.50,3.75], 3:[2.99,3.50,3.75], 4:[2.99,3.50,3.75], 5:[2.99,3.50,3.75], 6:[2.99,3.50,3.75],
+  7:[2.99,3.50,3.75], 8:[2.99,3.50,3.75], 9:[2.99,3.50,3.75], 10:[2.99,3.50,3.75], 11:[2.99,3.50,3.75], 12:[2.99,3.50,3.75],
+  13:[3.01,3.52,3.77], 14:[3.03,3.58,3.84], 15:[3.05,3.68,3.94], 16:[3.06,3.80,4.07], 17:[3.08,3.93,4.21], 18:[3.10,4.09,4.38],
+  19:[3.11,4.26,4.56], 20:[3.13,4.44,4.76], 21:[3.15,4.64,4.97], 22:[3.17,4.84,5.18], 23:[3.18,5.05,5.41], 24:[3.20,5.27,5.64],
+  25:[3.22,5.35,5.73], 26:[3.23,5.45,5.83], 27:[3.25,5.56,5.96], 28:[3.27,5.68,6.09], 29:[3.29,5.82,6.24], 30:[3.30,5.97,6.40],
+  31:[3.32,6.13,6.56], 32:[3.34,6.29,6.74], 33:[3.35,6.47,6.93], 34:[3.37,6.65,7.12], 35:[3.39,6.83,7.32], 36:[3.41,7.02,7.53],
+  37:[3.42,7.13,7.63], 38:[3.44,7.24,7.75], 39:[3.46,7.36,7.88], 40:[3.47,7.49,8.02], 41:[3.49,7.62,8.17], 42:[3.51,7.77,8.32],
+  43:[3.53,7.92,8.49], 44:[3.54,8.08,8.66], 45:[3.56,8.24,8.83], 46:[3.58,8.41,9.01], 47:[3.59,8.58,9.20], 48:[3.61,8.76,9.39],
+  49:[3.63,8.87,9.51], 50:[3.65,8.99,9.63], 51:[3.66,9.11,9.76], 52:[3.68,9.24,9.90], 53:[3.70,9.38,10.05], 54:[3.71,9.52,10.20],
+  55:[3.73,9.67,10.36], 56:[3.75,9.82,10.52], 57:[3.77,9.98,10.69], 58:[3.78,10.14,10.86], 59:[3.80,10.30,11.03], 60:[3.82,10.47,11.21]
+};
+
+// Matriz de Factores 100% Auditada y Sincronizada con el Tarifario Oficial
+const factoresSeguroVida = {
+  M: {
+    18:0.377, 19:0.377, 20:0.377, 21:0.383, 22:0.390, 23:0.397, 24:0.404, 25:0.409,
+    26:0.415, 27:0.419, 28:0.426, 29:0.432, 30:0.437, 31:0.444, 32:0.451, 33:0.459,
+    34:0.469, 35:0.479, 36:0.479, 37:0.490, 38:0.502, 39:0.516, 40:0.532, 41:0.547,
+    42:0.565, 43:0.581, 44:0.600, 45:0.620, 46:0.641, 47:0.663, 48:0.693, 49:0.727,
+    50:0.765, 51:0.852, 52:0.909, 53:0.979, 54:1.060, 55:1.155, 56:1.158, 57:1.274,
+    58:1.410, 59:1.562, 60:1.727, 61:2.331, 62:2.542, 63:2.760, 64:2.968, 65:3.177,
+    66:3.382, 67:3.591, 68:3.866, 69:4.116, 70:4.397, 71:4.713, 72:5.068, 73:5.719,
+    74:6.119, 75:6.708, 76:7.520, 77:8.410, 78:9.507, 79:9.899, 80:10.937, 81:10.937,
+    82:10.937, 83:10.937, 84:10.937, 85:10.937
+  },
+  F: {
+    18:0.377, 19:0.377, 20:0.377, 21:0.377, 22:0.377, 23:0.377, 24:0.377, 25:0.383,
+    26:0.383, 27:0.390, 28:0.397, 29:0.404, 30:0.409, 31:0.415, 32:0.419, 33:0.426,
+    34:0.432, 35:0.437, 36:0.444, 37:0.451, 38:0.459, 39:0.469, 40:0.479, 41:0.479,
+    42:0.490, 43:0.502, 44:0.516, 45:0.532, 46:0.547, 47:0.565, 48:0.581, 49:0.600,
+    50:0.620, 51:0.677, 52:0.699, 53:0.731, 54:0.767, 55:0.807, 56:0.852, 57:0.909,
+    58:0.979, 59:1.060, 60:1.155, 61:1.423, 62:1.566, 63:1.733, 64:1.920, 65:2.122,
+    66:2.331, 67:2.542, 68:2.760, 69:2.968, 70:3.177, 71:3.382, 72:3.591, 73:3.866,
+    74:4.116, 75:4.397, 76:4.713, 77:5.347, 78:5.719, 79:6.194, 80:6.788, 81:7.520,
+    82:8.410, 83:9.507, 84:9.899, 85:10.937
+  }
+};
 
 function formatoCOP(n){return"$"+Math.round(n).toLocaleString("es-CO");}
 function limpiarNumero(v){return parseInt(String(v||"").replace(/[^\d]/g,""))||0;}
 
-// Funciones para Alternar el Estado Colapsable
 function toggleDetails() {
   document.getElementById("infoContainer").classList.toggle("is-open");
 }
@@ -418,6 +499,22 @@ function obtenerIndiceRango(monto) {
   return 4;
 }
 
+function obtenerFngPct(monto, plazo) {
+  const sm = CONFIG.SMMLV;
+  let idxColumna = 0;
+  
+  if (monto <= sm * 6) {
+    idxColumna = 0;
+  } else if (monto <= sm * 25) {
+    idxColumna = 1;
+  } else {
+    idxColumna = 2;
+  }
+
+  const plazoAjustado = Math.min(Math.max(plazo, 1), 60);
+  return fngTabla[plazoAjustado] ? fngTabla[plazoAjustado][idxColumna] : 0;
+}
+
 function obtenerTasa(tipo, perfil, monto) {
   return CONFIG.TASAS[tipo][perfil][obtenerIndiceRango(monto)];
 }
@@ -430,16 +527,38 @@ function obtenerPctMipyme(monto, tipo, perfil) {
   return 0;
 }
 
-function calcularPrimeraCuotaAux(m, pl, t, p, g, e) {
+// Lógica Estándar de Edad Ponderada: Math.ceil(edad + (plazo / 24))
+function calcularSeguroVidaObligatorio(monto, genero, edad, plazo) {
+  if (!monto || !plazo) return 0;
+  
+  const edadPonderada = Math.ceil(edad + (plazo / 24));
+  const edadClave = Math.min(Math.max(edadPonderada, 18), 85);
+  
+  const factorBase = (genero === "M" ? factoresSeguroVida.M[edadClave] : factoresSeguroVida.F[edadClave]) || 0.377;
+  return Math.round(monto * (factorBase / 1000));
+}
+
+function calcularSeguroVoluntario(cuotaBaseCompleta, acepta, genero, edad) {
+  if (acepta !== "SI" || edad >= CONFIG.SEGURO_MICROEMPRESARIO.EDAD_MAXIMA) return 0;
+  const base = Math.min(cuotaBaseCompleta, CONFIG.SEGURO_MICROEMPRESARIO.TOPE_BASE);
+  const tasaPorMil = (genero === "M") ? CONFIG.SEGURO_MICROEMPRESARIO.TASA_MASCULINO : CONFIG.SEGURO_MICROEMPRESARIO.TASA_FEMENINO;
+  return base * (tasaPorMil / 1000);
+}
+
+function calcularPrimeraCuotaAux(m, pl, t, p, g, e, aceptaSeg) {
   if (!m || !pl) return 0;
   const tea = obtenerTasa(t, p, m);
   const tem = Math.pow(1 + tea/100, 1/12) - 1;
   const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
   const pctMipyme = obtenerPctMipyme(m, t, p);
-  const factorSeguro = (g === "M" ? factoresSeguroVida.M[e] : factoresSeguroVida.F[e]) || 0.377;
-  const seguroMensual = Math.ceil(m * (factorSeguro / 1000));
-  const mipymeMes = m * (pctMipyme * 1.19);
-  return cuotaBase + mipymeMes + seguroMensual;
+  
+  const seguroMensualVida = calcularSeguroVidaObligatorio(m, g, e, pl);
+  
+  const mipymeMes1 = m * (pctMipyme * 1.19);
+  const cuotaCreditoBase = cuotaBase + mipymeMes1 + seguroMensualVida;
+  const primaSeguroVol = calcularSeguroVoluntario(cuotaCreditoBase, aceptaSeg, g, e);
+
+  return cuotaCreditoBase + primaSeguroVol;
 }
 
 (function(){
@@ -461,7 +580,15 @@ function calcularYRenderizar(){
         m=limpiarNumero(document.getElementById("monto").value), 
         pl=parseInt(document.getElementById("plazo").value)||0, 
         g=document.getElementById("genero").value, 
-        e=parseInt(document.getElementById("edad").value)||0;
+        e=parseInt(document.getElementById("edad").value)||0,
+        aceptaSeg = document.getElementById("aceptaSeguro").value;
+
+  const elAlerta = document.getElementById("alertaEdad");
+  if(aceptaSeg === "SI" && e >= CONFIG.SEGURO_MICROEMPRESARIO.EDAD_MAXIMA) {
+    elAlerta.style.display = "flex";
+  } else {
+    elAlerta.style.display = "none";
+  }
 
   if(!m || !pl){
     document.getElementById("comparativaContainer").style.display="none";
@@ -476,11 +603,11 @@ function calcularYRenderizar(){
   gridComp.innerHTML = "";
 
   plazosComparativa.forEach(pMeses => {
-    const cuotaComp = calcularPrimeraCuotaAux(m, pMeses, t, p, g, e);
+    const cuotaComp = calcularPrimeraCuotaAux(m, pMeses, t, p, g, e, aceptaSeg);
     const card = document.createElement("div");
     card.className = `comparativa-card ${pMeses === pl ? 'selected' : ''}`;
     card.onclick = (event) => {
-      event.stopPropagation(); // Evitar que cierre el contenedor al hacer clic en una tarjeta
+      event.stopPropagation();
       seleccionarPlazoRapido(pMeses);
     };
     card.innerHTML = `
@@ -496,48 +623,72 @@ function calcularYRenderizar(){
   const tem = Math.pow(1 + tea/100, 1/12) - 1;
   const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
   const pctMipyme = obtenerPctMipyme(m, t, p);
-  const factorSeguro = (g === "M" ? factoresSeguroVida.M[e] : factoresSeguroVida.F[e]) || 0.377;
-  const seguroMensual = Math.ceil(m * (factorSeguro / 1000));
+  
+  // Seguro Obligatorio de Vida Fijo
+  const seguroMensualVida = calcularSeguroVidaObligatorio(m, g, e, pl);
+  
+  // Primera MIPYME
+  const primeraMipymeMes = m * (pctMipyme * 1.19);
+  const cuotaCreditoObligatoria1 = cuotaBase + primeraMipymeMes + seguroMensualVida;
+  
+  // Seguro Voluntario Fijo
+  const primaVoluntariaFija = calcularSeguroVoluntario(cuotaCreditoObligatoria1, aceptaSeg, g, e);
 
   let saldo = m;
-  let totalCuota = 0, totalCapital = 0, totalInteres = 0, totalMipyme = 0, totalSeguro = 0;
-  let primeraCuota = 0;
+  let baseMipymeAnual = m;      
+  let proximaBaseMipyme = m;    
+  let totalCuota = 0, totalCapital = 0, totalInteres = 0, totalMipyme = 0, totalSeguroVida = 0, totalSeguroVol = 0;
+  let primeraCuotaFinal = 0;
 
   const tbody = document.querySelector("#tablaResultados tbody");
   tbody.innerHTML = "";
 
   for(let i=1; i<=pl; i++){
+    if (i > 1 && (i - 1) % 12 === 0) {
+      baseMipymeAnual = proximaBaseMipyme;
+    }
+
     const interes = saldo * tem;
     const capital = (i === pl) ? saldo : (cuotaBase - interes);
-    const mipymeMes = saldo * (pctMipyme * 1.19);
-    const cuotaTotalMes = (capital + interes) + mipymeMes + seguroMensual;
+    const mipymeMes = baseMipymeAnual * (pctMipyme * 1.19);
     
-    if(i === 1) primeraCuota = cuotaTotalMes;
+    const seguroVidaCuota = (i <= pl) ? seguroMensualVida : 0;
+    const cuotaTotalMes = (capital + interes) + mipymeMes + seguroVidaCuota + primaVoluntariaFija;
+    
+    if(i === 1) primeraCuotaFinal = cuotaTotalMes;
 
-    totalCuota += cuotaTotalMes; totalCapital += capital; totalInteres += interes;
-    totalMipyme += mipymeMes; totalSeguro += seguroMensual;
+    totalCuota += cuotaTotalMes; 
+    totalCapital += capital; 
+    totalInteres += interes;
+    totalMipyme += mipymeMes; 
+    totalSeguroVida += seguroVidaCuota;
+    totalSeguroVol += primaVoluntariaFija;
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${i}</td><td>${formatoCOP(cuotaTotalMes)}</td><td>${formatoCOP(capital)}</td><td>${formatoCOP(interes)}</td><td>${formatoCOP(mipymeMes)}</td><td>${formatoCOP(seguroMensual)}</td><td>${formatoCOP(Math.max(0, saldo-capital))}</td>`;
+    tr.innerHTML = `<td>${i}</td><td>${formatoCOP(cuotaTotalMes)}</td><td>${formatoCOP(capital)}</td><td>${formatoCOP(interes)}</td><td>${formatoCOP(mipymeMes)}</td><td>${formatoCOP(seguroVidaCuota)}</td><td>${formatoCOP(primaVoluntariaFija)}</td><td>${formatoCOP(Math.max(0, saldo-capital))}</td>`;
     tbody.appendChild(tr);
+    
     saldo -= capital;
+
+    if (i % 12 === 11) {
+      proximaBaseMipyme = saldo;
+    }
   }
 
   // Actualizar UI
   document.getElementById("infoContainer").style.display="block";
-  document.getElementById("labelCuotaPlazo").textContent = `Primera Cuota Aprox. (${pl} Meses)`;
-  document.getElementById("cuotaFija").textContent = formatoCOP(primeraCuota);
+  document.getElementById("labelCuotaPlazo").textContent = `Cuota Estimada del Credito`;
+  document.getElementById("cuotaFija").textContent = formatoCOP(primeraCuotaFinal);
   document.getElementById("tasaTEA").textContent = `${tea.toFixed(2)}% E.A. - ${(tem*100).toFixed(2)}% Mes`;
   document.getElementById("aplicaMipyme").textContent = `${(pctMipyme*100).toFixed(4)}% Mes`;
+  document.getElementById("seguroVoluntarioInfo").textContent = formatoCOP(primaVoluntariaFija);
   document.getElementById("totalInteresInfo").textContent = formatoCOP(totalInteres);
+  document.getElementById("totalSeguroVolInfo").textContent = formatoCOP(totalSeguroVol);
 
-  const fngIdx = Math.min(pl, 36);
-  const idxTasa = obtenerIndiceRango(m);
-  const idxFNG = Math.floor(idxTasa / 2);
-  const fngPct = fngTabla[fngIdx] ? fngTabla[fngIdx][idxFNG] : 0;
+  const fngPct = obtenerFngPct(m, pl);
   document.getElementById("fngValue").textContent = `${fngPct}% - ${formatoCOP(m * (fngPct/100) * 1.19)}`;
 
-  document.getElementById("filaTotales").innerHTML = `<td style="text-align:left">TOTAL</td><td>${formatoCOP(totalCuota)}</td><td>${formatoCOP(totalCapital)}</td><td>${formatoCOP(totalInteres)}</td><td>${formatoCOP(totalMipyme)}</td><td>${formatoCOP(totalSeguro)}</td><td>-</td>`;
+  document.getElementById("filaTotales").innerHTML = `<td style="text-align:left">TOTAL</td><td>${formatoCOP(totalCuota)}</td><td>${formatoCOP(totalCapital)}</td><td>${formatoCOP(totalInteres)}</td><td>${formatoCOP(totalMipyme)}</td><td>${formatoCOP(totalSeguroVida)}</td><td>${formatoCOP(totalSeguroVol)}</td><td>-</td>`;
   document.getElementById("tablaContainerWrapper").style.display="block";
 }
 

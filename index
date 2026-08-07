@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculadora de Crédito - Cotizador Comercial</title>
+<style>
+  :root{
+    --primary:#2563eb;
+    --primary-dark: #1e40af;
+    --surface:#f8fafc;
+    --blue-light: #eff6ff;
+    --blue-border: #bfdbfe;
+    --accent-green: #16a34a;
+    --green-light: #f0fdf4;
+    --green-border: #bbf7d0;
+  }
+  body{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--surface);
+    margin: 15px;
+    color:#111827;
+  }
+  h1{ text-align:center; color:#0f172a; margin-bottom:20px; font-weight: 800; font-size: 1.5rem; }
+  
+  .card{
+    max-width:1000px;
+    margin:0 auto;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(15,23,42,0.1);
+    overflow: hidden;
+  }
+
+  /* Sección Superior (Formulario) */
+  .form-section {
+    background: var(--blue-light);
+    padding: 20px;
+    border-bottom: 1px solid var(--blue-border);
+  }
+  
+  form{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap:15px;
+    align-items:end;
+  }
+  label{ display:block; font-weight:700; margin-bottom:6px; font-size:0.8rem; color:#1e40af; text-transform: uppercase; letter-spacing: 0.5px;}
+  select, input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--blue-border);
+    font-size:0.95rem;
+    box-sizing:border-box;
+    background: #fff;
+  }
+
+  /* Bloque Principal: Resumen Cuota (Colapsable) */
+  .info-container {
+    margin: 20px;
+    border: 2px solid var(--blue-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .info-summary {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #fff;
+    border-radius: 12px;
+  }
+  
+  .summary-item { display: flex; flex-direction: column; }
+  .summary-item strong { font-size: 0.8rem; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 4px;}
+  .summary-item span { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
+
+  .toggle-icon {
+    width: 28px;
+    height: 28px;
+    transition: transform 0.3s;
+    fill: var(--primary);
+  }
+  .is-open .toggle-icon, .is-open-comp .toggle-icon-comp, .is-open-table .toggle-icon-table { transform: rotate(180deg); }
+
+  /* Detalles Técnicos */
+  .info-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s;
+    opacity: 0;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+  }
+  .is-open .info-details {
+    max-height: 300px;
+    opacity: 1;
+    padding-bottom: 20px;
+    border-top: 1px solid var(--blue-light);
+    padding-top: 15px;
+  }
+
+  .detail-item strong { display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+  .detail-item span { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+
+  /* Comparativa Rápida de Plazos (Colapsable) */
+  .comparativa-container {
+    margin: 0 20px 20px 20px;
+    border: 2px solid var(--green-border);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .comparativa-header {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: var(--green-light);
+    border-radius: 10px;
+  }
+
+  .comparativa-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--accent-green);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle-icon-comp {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s;
+    fill: var(--accent-green);
+  }
+
+  .comparativa-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s;
+    opacity: 0;
+    padding: 0 16px;
+  }
+
+  .is-open-comp .comparativa-body {
+    max-height: 500px;
+    opacity: 1;
+    padding: 16px;
+    border-top: 1px solid var(--green-border);
+  }
+
+  .comparativa-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    gap: 10px;
+  }
+
+  .comparativa-card {
+    background: #fff;
+    padding: 10px 6px;
+    border-radius: 8px;
+    border: 1px solid var(--green-border);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .comparativa-card:hover {
+    border-color: var(--accent-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.1);
+  }
+
+  .comparativa-card.selected {
+    background: #dcfce7;
+    border-color: var(--accent-green);
+  }
+
+  .comparativa-plazo { font-size: 0.75rem; font-weight: 700; color: #166534; text-transform: uppercase; }
+  .comparativa-cuota { font-size: 0.95rem; font-weight: 900; color: #0f172a; margin-top: 4px; }
+
+  /* Tabla de Amortización (Colapsable) */
+  .table-collapsible-container {
+    margin: 0 20px 20px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .table-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+  }
+
+  .toggle-icon-table {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s;
+    fill: var(--primary);
+  }
+
+  .table-body-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, opacity 0.3s;
+    opacity: 0;
+  }
+
+  .is-open-table .table-body-wrapper {
+    max-height: 2000px; /* Suficiente para tablas largas de 60 cuotas */
+    opacity: 1;
+  }
+
+  .table-container { overflow-x: auto; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:10px 12px; text-align:right; font-size:0.85rem; border-bottom: 1px solid #f1f5f9; }
+  thead th { background: var(--primary); color:#fff; font-weight: 600; }
+  tfoot td { background: #f8fafc; font-weight: 800; color: var(--primary-dark); border-top: 2px solid var(--blue-border); }
+</style>
+</head>
+<body>
+
+  <h1>Cotizador Comercial de Crédito</h1>
+
+  <div class="card">
+    <div class="form-section">
+      <form id="form">
+        <div>
+          <label>Tipo Cliente</label>
+          <select id="tipoCliente">
+            <option value="NUEVO">NUEVO</option>
+            <option value="ANTIGUO">ANTIGUO</option>
+          </select>
+        </div>
+        <div>
+          <label>Perfil</label>
+          <select id="perfil">
+            <option value="A+">A+</option>
+            <option value="BAA">BAA</option>
+            <option value="BBB">BBB</option>
+            <option value="BCC">BCC</option>
+          </select>
+        </div>
+        <div>
+          <label>Monto Solicitado</label>
+          <input id="monto" type="text" inputmode="numeric" placeholder="$0" required />
+        </div>
+        <div>
+          <label>Plazo (Meses)</label>
+          <input id="plazo" type="number" inputmode="numeric" min="1" max="120" value="12" required />
+        </div>
+        <div>
+          <label>Género</label>
+          <select id="genero">
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+          </select>
+        </div>
+        <div>
+          <label>Edad</label>
+          <select id="edad"></select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Bloque 1: Primera Cuota + Detalles Colapsables -->
+    <div class="info-container" id="infoContainer" style="display:none;">
+      <div class="info-summary" onclick="toggleDetails()">
+        <div class="summary-item">
+          <strong id="labelCuotaPlazo">Primera Cuota Aprox. (12 Meses)</strong>
+          <span id="cuotaFija"></span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+        </div>
+      </div>
+      
+      <div class="info-details" id="infoDetails">
+        <div class="detail-item">
+          <strong>Tasa de Interés</strong>
+          <span id="tasaTEA"></span>
+        </div>
+        <div class="detail-item">
+          <strong>Comisión MIPYME</strong>
+          <span id="aplicaMipyme"></span>
+        </div>
+        <div class="detail-item">
+          <strong>FNG Estimado</strong>
+          <span id="fngValue"></span>
+        </div>
+        <div class="detail-item">
+          <strong>Costo Total Intereses</strong>
+          <span id="totalInteresInfo"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque 2: Comparativa de Plazos Colapsable -->
+    <div class="comparativa-container" id="comparativaContainer" style="display:none;">
+      <div class="comparativa-header" onclick="toggleComparativa()">
+        <div class="comparativa-title">
+          ⚡ Ver Comparativa por Plazos (6 a 60 Meses)
+        </div>
+        <svg class="toggle-icon-comp" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+      </div>
+      <div class="comparativa-body" id="comparativaBody">
+        <div class="comparativa-grid" id="comparativaGrid"></div>
+      </div>
+    </div>
+
+    <!-- Bloque 3: Tabla de Amortización Colapsable -->
+    <div class="table-collapsible-container" id="tablaContainerWrapper" style="display:none;">
+      <div class="table-header" onclick="toggleTabla()">
+        <div class="table-title">
+          📊 Ver Tabla de Amortización Detallada
+        </div>
+        <svg class="toggle-icon-table" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+      </div>
+      <div class="table-body-wrapper" id="tablaBodyWrapper">
+        <div class="table-container">
+          <table id="tablaResultados">
+            <thead>
+              <tr>
+                <th style="text-align:left">#</th>
+                <th>Cuota Total</th>
+                <th>Capital</th>
+                <th>Interés</th>
+                <th>MIPYME</th>
+                <th>Seguro</th>
+                <th>Saldo</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr id="filaTotales"></tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+const CONFIG = {
+  SMMLV: 1750000, 
+  TOPES_SMMLV: {
+    RANGO_1: 4,
+    RANGO_2: 6,
+    RANGO_3: 19,
+    RANGO_4: 25,
+    MIPYME_LIMITE: 4 
+  },
+
+  TASAS: {
+    NUEVO: {
+      "A+":  [66.65, 55.65, 48.60, 45.10, 35.20],
+      "BAA": [72.00, 64.85, 56.00, 53.50, 37.20],
+      "BBB": [74.85, 69.20, 56.60, 54.10, 37.50],
+      "BCC": [75.05, 69.40, 69.40, 69.40, 69.40]
+    },
+    ANTIGUO: {
+      "A+":  [64.65, 52.65, 47.60, 44.60, 32.20],
+      "BAA": [70.00, 61.85, 55.00, 53.00, 36.60],
+      "BBB": [73.00, 66.20, 55.60, 53.60, 37.00],
+      "BCC": [73.20, 66.40, 66.40, 66.40, 66.40]
+    }
+  }
+};
+
+const fngTabla={1:[2.99,3.5,3.75],2:[2.99,3.5,3.75],3:[2.99,3.5,3.75],4:[2.99,3.5,3.75],5:[2.99,3.5,3.75],6:[2.99,3.5,3.75],7:[2.99,3.5,3.75],8:[2.99,3.5,3.75],9:[2.99,3.5,3.75],10:[2.99,3.5,3.75],11:[2.99,3.5,3.75],12:[2.99,3.5,3.75],13:[3.01,3.52,3.77],14:[3.03,3.58,3.84],15:[3.05,3.68,3.94],16:[3.06,3.8,4.07],17:[3.08,3.93,4.21],18:[3.1,4.09,4.38],19:[3.11,4.26,4.56],20:[3.13,4.44,4.76],21:[3.15,4.64,4.97],22:[3.17,4.84,5.18],23:[3.18,5.05,5.41],24:[3.2,5.27,5.64],25:[3.22,5.35,5.73],26:[3.23,5.45,5.83],27:[3.25,5.56,5.96],28:[3.27,5.68,6.09],29:[3.29,5.82,6.24],30:[3.3,5.97,6.4],31:[3.32,6.13,6.56],32:[3.34,6.29,6.74],33:[3.35,6.47,6.93],34:[3.37,6.65,7.12],35:[3.39,6.83,7.32],36:[3.41,7.02,7.53]};
+const factoresSeguroVida={M:{18:0.377,19:0.377,20:0.377,21:0.383,22:0.390,23:0.397,24:0.404,25:0.409,26:0.415,27:0.419,28:0.426,29:0.432,30:0.437,31:0.444,32:0.451,33:0.459,34:0.469,35:0.479,36:0.479,37:0.490,38:0.502,39:0.516,40:0.532,41:0.547,42:0.565,43:0.581,44:0.600,45:0.620,46:0.641,47:0.663,48:0.693,49:0.727,50:0.765,51:0.852,52:0.909,53:0.979,54:1.060,55:1.155,56:1.158,57:1.274,58:1.410,59:1.562,60:1.727,61:2.331,62:2.542,63:2.760,64:2.968,65:3.177,66:3.382,67:3.591,68:3.866,69:4.116,70:4.397,71:3.068,72:3.347,73:3.719,74:4.194,75:4.788,76:5.520,77:6.410,78:7.507,79:8.990,80:10.937,81:10.937,82:10.937,83:10.937,84:10.937,85:10.937},F:{18:0.377,19:0.377,20:0.377,21:0.377,22:0.377,23:0.377,24:0.377,25:0.383,26:0.383,27:0.390,28:0.397,29:0.404,30:0.409,31:0.415,32:0.419,33:0.426,34:0.432,35:0.437,36:0.444,37:0.451,38:0.459,39:0.469,40:0.479,41:0.479,42:0.490,43:0.502,44:0.516,45:0.532,46:0.547,47:0.565,48:0.581,49:0.600,50:0.620,51:0.620,52:0.677,53:0.699,54:0.731,55:0.767,56:0.807,57:0.852,58:0.909,59:0.979,60:1.060,61:1.155,62:1.423,63:1.566,64:1.733,65:1.920,66:2.122,67:2.331,68:2.542,69:2.760,70:2.968,71:3.177,72:3.382,73:3.591,74:3.866,75:4.116,76:4.397,77:3.068,78:3.347,79:3.719,80:4.194,81:4.788,82:5.520,83:6.410,84:7.507,85:10.937}};
+
+function formatoCOP(n){return"$"+Math.round(n).toLocaleString("es-CO");}
+function limpiarNumero(v){return parseInt(String(v||"").replace(/[^\d]/g,""))||0;}
+
+// Funciones para Alternar el Estado Colapsable
+function toggleDetails() {
+  document.getElementById("infoContainer").classList.toggle("is-open");
+}
+
+function toggleComparativa() {
+  document.getElementById("comparativaContainer").classList.toggle("is-open-comp");
+}
+
+function toggleTabla() {
+  document.getElementById("tablaContainerWrapper").classList.toggle("is-open-table");
+}
+
+function obtenerIndiceRango(monto) {
+  const sm = CONFIG.SMMLV;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_1)) return 0;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_2)) return 1;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_3)) return 2;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_4)) return 3;
+  return 4;
+}
+
+function obtenerTasa(tipo, perfil, monto) {
+  return CONFIG.TASAS[tipo][perfil][obtenerIndiceRango(monto)];
+}
+
+function obtenerPctMipyme(monto, tipo, perfil) {
+  if (tipo === "ANTIGUO" && perfil === "A+") return 0;
+  const sm = CONFIG.SMMLV;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.MIPYME_LIMITE)) return 0.006045;
+  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_4)) return 0.003675;
+  return 0;
+}
+
+function calcularPrimeraCuotaAux(m, pl, t, p, g, e) {
+  if (!m || !pl) return 0;
+  const tea = obtenerTasa(t, p, m);
+  const tem = Math.pow(1 + tea/100, 1/12) - 1;
+  const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
+  const pctMipyme = obtenerPctMipyme(m, t, p);
+  const factorSeguro = (g === "M" ? factoresSeguroVida.M[e] : factoresSeguroVida.F[e]) || 0.377;
+  const seguroMensual = Math.ceil(m * (factorSeguro / 1000));
+  const mipymeMes = m * (pctMipyme * 1.19);
+  return cuotaBase + mipymeMes + seguroMensual;
+}
+
+(function(){
+  const elEdad=document.getElementById("edad");
+  for(let a=18;a<=85;a++){
+    const o=document.createElement("option"); o.value=a; o.textContent=a;
+    if(a===30)o.selected=!0; elEdad.appendChild(o);
+  }
+})();
+
+function seleccionarPlazoRapido(nuevoPlazo) {
+  document.getElementById("plazo").value = nuevoPlazo;
+  calcularYRenderizar();
+}
+
+function calcularYRenderizar(){
+  const t=document.getElementById("tipoCliente").value, 
+        p=document.getElementById("perfil").value, 
+        m=limpiarNumero(document.getElementById("monto").value), 
+        pl=parseInt(document.getElementById("plazo").value)||0, 
+        g=document.getElementById("genero").value, 
+        e=parseInt(document.getElementById("edad").value)||0;
+
+  if(!m || !pl){
+    document.getElementById("comparativaContainer").style.display="none";
+    document.getElementById("infoContainer").style.display="none";
+    document.getElementById("tablaContainerWrapper").style.display="none";
+    return;
+  }
+
+  // Renderizar Plazos en Comparativa
+  const plazosComparativa = [6, 12, 18, 24, 30, 36, 48, 60];
+  const gridComp = document.getElementById("comparativaGrid");
+  gridComp.innerHTML = "";
+
+  plazosComparativa.forEach(pMeses => {
+    const cuotaComp = calcularPrimeraCuotaAux(m, pMeses, t, p, g, e);
+    const card = document.createElement("div");
+    card.className = `comparativa-card ${pMeses === pl ? 'selected' : ''}`;
+    card.onclick = (event) => {
+      event.stopPropagation(); // Evitar que cierre el contenedor al hacer clic en una tarjeta
+      seleccionarPlazoRapido(pMeses);
+    };
+    card.innerHTML = `
+      <div class="comparativa-plazo">${pMeses} Meses</div>
+      <div class="comparativa-cuota">${formatoCOP(cuotaComp)}</div>
+    `;
+    gridComp.appendChild(card);
+  });
+  document.getElementById("comparativaContainer").style.display="block";
+
+  // Cálculo Amortización Detallada
+  const tea = obtenerTasa(t, p, m);
+  const tem = Math.pow(1 + tea/100, 1/12) - 1;
+  const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
+  const pctMipyme = obtenerPctMipyme(m, t, p);
+  const factorSeguro = (g === "M" ? factoresSeguroVida.M[e] : factoresSeguroVida.F[e]) || 0.377;
+  const seguroMensual = Math.ceil(m * (factorSeguro / 1000));
+
+  let saldo = m;
+  let totalCuota = 0, totalCapital = 0, totalInteres = 0, totalMipyme = 0, totalSeguro = 0;
+  let primeraCuota = 0;
+
+  const tbody = document.querySelector("#tablaResultados tbody");
+  tbody.innerHTML = "";
+
+  for(let i=1; i<=pl; i++){
+    const interes = saldo * tem;
+    const capital = (i === pl) ? saldo : (cuotaBase - interes);
+    const mipymeMes = saldo * (pctMipyme * 1.19);
+    const cuotaTotalMes = (capital + interes) + mipymeMes + seguroMensual;
+    
+    if(i === 1) primeraCuota = cuotaTotalMes;
+
+    totalCuota += cuotaTotalMes; totalCapital += capital; totalInteres += interes;
+    totalMipyme += mipymeMes; totalSeguro += seguroMensual;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i}</td><td>${formatoCOP(cuotaTotalMes)}</td><td>${formatoCOP(capital)}</td><td>${formatoCOP(interes)}</td><td>${formatoCOP(mipymeMes)}</td><td>${formatoCOP(seguroMensual)}</td><td>${formatoCOP(Math.max(0, saldo-capital))}</td>`;
+    tbody.appendChild(tr);
+    saldo -= capital;
+  }
+
+  // Actualizar UI
+  document.getElementById("infoContainer").style.display="block";
+  document.getElementById("labelCuotaPlazo").textContent = `Primera Cuota Aprox. (${pl} Meses)`;
+  document.getElementById("cuotaFija").textContent = formatoCOP(primeraCuota);
+  document.getElementById("tasaTEA").textContent = `${tea.toFixed(2)}% E.A. - ${(tem*100).toFixed(2)}% Mes`;
+  document.getElementById("aplicaMipyme").textContent = `${(pctMipyme*100).toFixed(4)}% Mes`;
+  document.getElementById("totalInteresInfo").textContent = formatoCOP(totalInteres);
+
+  const fngIdx = Math.min(pl, 36);
+  const idxTasa = obtenerIndiceRango(m);
+  const idxFNG = Math.floor(idxTasa / 2);
+  const fngPct = fngTabla[fngIdx] ? fngTabla[fngIdx][idxFNG] : 0;
+  document.getElementById("fngValue").textContent = `${fngPct}% - ${formatoCOP(m * (fngPct/100) * 1.19)}`;
+
+  document.getElementById("filaTotales").innerHTML = `<td style="text-align:left">TOTAL</td><td>${formatoCOP(totalCuota)}</td><td>${formatoCOP(totalCapital)}</td><td>${formatoCOP(totalInteres)}</td><td>${formatoCOP(totalMipyme)}</td><td>${formatoCOP(totalSeguro)}</td><td>-</td>`;
+  document.getElementById("tablaContainerWrapper").style.display="block";
+}
+
+document.querySelectorAll("input, select").forEach(el => {
+  el.addEventListener("input", (e) => {
+    if(e.target.id === "monto"){
+      const v = limpiarNumero(e.target.value);
+      e.target.value = v ? formatoCOP(v) : "";
+    }
+    calcularYRenderizar();
+  });
+});
+</script>
+</body>
+</html>

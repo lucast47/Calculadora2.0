@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Calculadora de Crédito - Cotizador Comercial</title>
+<title>Calculadora de Crédito</title>
 <style>
   :root{
     --primary:#2563eb;
@@ -35,7 +35,6 @@
     overflow: hidden;
   }
 
-  /* Sección Superior (Formulario) */
   .form-section {
     background: var(--blue-light);
     padding: 20px;
@@ -59,7 +58,9 @@
     background: #fff;
   }
 
-  /* Alerta de Edad */
+  .modo-auto, .modo-manual { display: block; }
+  .hidden { display: none !important; }
+
   .alert-edad {
     margin: 15px 20px 0 20px;
     padding: 12px 16px;
@@ -74,37 +75,48 @@
     gap: 8px;
   }
 
-  /* Bloque Principal: Resumen Cuota (Colapsable) */
-  .info-container {
+  .info-container, .comparativa-container, .table-collapsible-container {
     margin: 20px;
-    border: 2px solid var(--blue-border);
     border-radius: 12px;
     background: #fff;
+    overflow: hidden;
   }
 
-  .info-summary {
-    padding: 16px 20px;
+  .info-container { border: 2px solid var(--blue-border); }
+  .comparativa-container { border: 2px solid var(--green-border); margin-top:0; }
+  .table-collapsible-container { border: 1px solid #e2e8f0; margin-top:0; }
+
+  .info-summary, .comparativa-header, .table-header {
+    padding: 14px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
     background: #fff;
-    border-radius: 12px;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
   }
-  
+
+  .comparativa-header { background: var(--green-light); }
+  .table-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+
   .summary-item { display: flex; flex-direction: column; }
-  .summary-item strong { font-size: 0.8rem; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 8px;}
+  .summary-item strong { font-size: 0.8rem; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 4px;}
   .summary-item span { font-size: 1.6rem; font-weight: 900; color: #0f172a; }
 
-  .toggle-icon {
-    width: 28px;
-    height: 28px;
+  .toggle-icon, .toggle-icon-comp, .toggle-icon-table {
+    width: 24px;
+    height: 24px;
     transition: transform 0.3s;
-    fill: var(--primary);
   }
+  .toggle-icon { fill: var(--primary); }
+  .toggle-icon-comp { fill: var(--accent-green); }
+  .toggle-icon-table { fill: var(--primary); }
+
   .is-open .toggle-icon, .is-open-comp .toggle-icon-comp, .is-open-table .toggle-icon-table { transform: rotate(180deg); }
 
-  /* Detalles Técnicos */
   .info-details {
     max-height: 0;
     overflow: hidden;
@@ -126,47 +138,22 @@
   .detail-item strong { display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
   .detail-item span { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
 
-  /* Comparativa Rápida de Plazos (Colapsable) */
-  .comparativa-container {
-    margin: 0 20px 20px 20px;
-    border: 2px solid var(--green-border);
-    border-radius: 12px;
-    background: #fff;
-  }
-
-  .comparativa-header {
-    padding: 14px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    background: var(--green-light);
-    border-radius: 10px;
-  }
-
-  .comparativa-title {
+  .comparativa-title, .table-title {
     font-size: 0.85rem;
     font-weight: 800;
-    color: var(--accent-green);
     text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 8px;
   }
+  .comparativa-title { color: var(--accent-green); }
+  .table-title { color: var(--primary-dark); }
 
-  .toggle-icon-comp {
-    width: 24px;
-    height: 24px;
-    transition: transform 0.3s;
-    fill: var(--accent-green);
-  }
-
-  .comparativa-body {
+  .comparativa-body, .table-body-wrapper {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s ease-out, opacity 0.3s;
     opacity: 0;
-    padding: 0 16px;
   }
 
   .is-open-comp .comparativa-body {
@@ -174,6 +161,11 @@
     opacity: 1;
     padding: 16px;
     border-top: 1px solid var(--green-border);
+  }
+
+  .is-open-table .table-body-wrapper {
+    max-height: 2000px;
+    opacity: 1;
   }
 
   .comparativa-grid {
@@ -190,14 +182,13 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-family: inherit;
   }
-
   .comparativa-card:hover {
     border-color: var(--accent-green);
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(22, 163, 74, 0.1);
   }
-
   .comparativa-card.selected {
     background: #dcfce7;
     border-color: var(--accent-green);
@@ -205,51 +196,6 @@
 
   .comparativa-plazo { font-size: 0.75rem; font-weight: 700; color: #166534; text-transform: uppercase; }
   .comparativa-cuota { font-size: 0.95rem; font-weight: 900; color: #0f172a; margin-top: 4px; }
-
-  /* Tabla de Amortización (Colapsable) */
-  .table-collapsible-container {
-    margin: 0 20px 20px 20px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #fff;
-    overflow: hidden;
-  }
-
-  .table-header {
-    padding: 14px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  .table-title {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: var(--primary-dark);
-    text-transform: uppercase;
-  }
-
-  .toggle-icon-table {
-    width: 24px;
-    height: 24px;
-    transition: transform 0.3s;
-    fill: var(--primary);
-  }
-
-  .table-body-wrapper {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s ease-out, opacity 0.3s;
-    opacity: 0;
-  }
-
-  .is-open-table .table-body-wrapper {
-    max-height: 2000px;
-    opacity: 1;
-  }
 
   .table-container { overflow-x: auto; }
   table { width:100%; border-collapse:collapse; }
@@ -260,20 +206,30 @@
 </head>
 <body>
 
-  <h1>Cotizador Comercial de Crédito</h1>
+  <h1>Calculadora de Credito BCS</h1>
 
   <div class="card">
     <div class="form-section">
       <form id="form">
+        <!-- Control de Modo de Tasa -->
         <div>
-          <label>Tipo Cliente</label>
+          <label for="modoCalculo">Modo de Tasa</label>
+          <select id="modoCalculo">
+            <option value="AUTO">POR PERFIL</option>
+            <option value="MANUAL">MANUAL</option>
+          </select>
+        </div>
+
+        <!-- Campos para Modo Por Perfil -->
+        <div class="modo-auto">
+          <label for="tipoCliente">Tipo Cliente</label>
           <select id="tipoCliente">
             <option value="NUEVO">NUEVO</option>
             <option value="ANTIGUO">ANTIGUO</option>
           </select>
         </div>
-        <div>
-          <label>Perfil</label>
+        <div class="modo-auto">
+          <label for="perfil">Perfil</label>
           <select id="perfil">
             <option value="A+">A+</option>
             <option value="BAA">BAA</option>
@@ -281,27 +237,42 @@
             <option value="BCC">BCC</option>
           </select>
         </div>
+
+        <!-- Campos para Modo Manual (Ocultos por defecto) -->
+        <div class="modo-manual hidden">
+          <label for="tasaManual">Tasa EA (%)</label>
+          <input id="tasaManual" type="number" step="0.01" min="0.01" max="150" placeholder="Ej: 48.60" />
+        </div>
+        <div class="modo-manual hidden">
+          <label for="pymeManual">¿Lleva MIPYME?</label>
+          <select id="pymeManual">
+            <option value="SI">SÍ</option>
+            <option value="NO">NO</option>
+          </select>
+        </div>
+
+        <!-- Campos Comunes -->
         <div>
-          <label>Monto Solicitado</label>
+          <label for="monto">Monto Solicitado</label>
           <input id="monto" type="text" inputmode="numeric" placeholder="$0" required />
         </div>
         <div>
-          <label>Plazo (Meses)</label>
+          <label for="plazo">Plazo (Meses)</label>
           <input id="plazo" type="number" inputmode="numeric" min="1" max="120" value="12" required />
         </div>
         <div>
-          <label>Género</label>
+          <label for="genero">Género</label>
           <select id="genero">
             <option value="F">Femenino</option>
             <option value="M">Masculino</option>
           </select>
         </div>
         <div>
-          <label>Edad</label>
+          <label for="edad">Edad</label>
           <select id="edad"></select>
         </div>
         <div>
-          <label>MicroEmp. Protegido</label>
+          <label for="aceptaSeguro">MicroEmp. Protegido</label>
           <select id="aceptaSeguro">
             <option value="NO">NO</option>
             <option value="SI">SÍ</option>
@@ -310,72 +281,47 @@
       </form>
     </div>
 
-    <!-- Mensaje de Alerta por Edad en Seguro Voluntario -->
     <div class="alert-edad" id="alertaEdad" style="display:none;">
       ⚠️ Cliente fuera de política para seguro MicroEmpresario Protegido por edad (≥ 70 años).
     </div>
 
-    <!-- Bloque 1: Primera Cuota + Detalles Colapsables -->
+    <!-- Bloque 1: Resumen de Cuota -->
     <div class="info-container" id="infoContainer" style="display:none;">
-      <div class="info-summary" onclick="toggleDetails()">
-        <div class="summary-item">
+      <button type="button" class="info-summary" onclick="toggleDetails()">
+        <span class="summary-item">
           <strong id="labelCuotaPlazo">Primera Cuota Aprox. (12 Meses)</strong>
           <span id="cuotaFija"></span>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-        </div>
-      </div>
+        </span>
+        <svg class="toggle-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+      </button>
       
       <div class="info-details" id="infoDetails">
-        <div class="detail-item">
-          <strong>Tasa de Interés</strong>
-          <span id="tasaTEA"></span>
-        </div>
-        <div class="detail-item">
-          <strong>Comisión MIPYME</strong>
-          <span id="aplicaMipyme"></span>
-        </div>
-        <div class="detail-item">
-          <strong>FNG Estimado</strong>
-          <span id="fngValue"></span>
-        </div>
-        <div class="detail-item">
-          <strong>MicroEmp. Protegido (Mes)</strong>
-          <span id="seguroVoluntarioInfo"></span>
-        </div>
-        <div class="detail-item">
-          <strong>Costo Total Intereses</strong>
-          <span id="totalInteresInfo"></span>
-        </div>
-        <div class="detail-item">
-          <strong>Total Seguro Vol. (Crédito)</strong>
-          <span id="totalSeguroVolInfo"></span>
-        </div>
+        <div class="detail-item"><strong>Tasa de Interés</strong><span id="tasaTEA"></span></div>
+        <div class="detail-item"><strong>Comisión MIPYME (Mes 1)</strong><span id="aplicaMipyme"></span></div>
+        <div class="detail-item"><strong>FNG Estimado</strong><span id="fngValue"></span></div>
+        <div class="detail-item"><strong>MicroEmp. Protegido (Mes)</strong><span id="seguroVoluntarioInfo"></span></div>
+        <div class="detail-item"><strong>Costo Total Intereses</strong><span id="totalInteresInfo"></span></div>
+        <div class="detail-item"><strong>Total Seguro Vol. (Crédito)</strong><span id="totalSeguroVolInfo"></span></div>
       </div>
     </div>
 
-    <!-- Bloque 2: Comparativa de Plazos Colapsable -->
+    <!-- Bloque 2: Comparativa de Plazos -->
     <div class="comparativa-container" id="comparativaContainer" style="display:none;">
-      <div class="comparativa-header" onclick="toggleComparativa()">
-        <div class="comparativa-title">
-          Comparador por Plazos
-        </div>
+      <button type="button" class="comparativa-header" onclick="toggleComparativa()">
+        <span class="comparativa-title">⚡ Comparador de Plazos</span>
         <svg class="toggle-icon-comp" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-      </div>
+      </button>
       <div class="comparativa-body" id="comparativaBody">
         <div class="comparativa-grid" id="comparativaGrid"></div>
       </div>
     </div>
 
-    <!-- Bloque 3: Tabla de Amortización Colapsable -->
+    <!-- Bloque 3: Tabla de Amortización -->
     <div class="table-collapsible-container" id="tablaContainerWrapper" style="display:none;">
-      <div class="table-header" onclick="toggleTabla()">
-        <div class="table-title">
-          Tabla de Amortización Detallada
-        </div>
+      <button type="button" class="table-header" onclick="toggleTabla()">
+        <span class="table-title">📊 Proyeccion de Pagos</span>
         <svg class="toggle-icon-table" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-      </div>
+      </button>
       <div class="table-body-wrapper" id="tablaBodyWrapper">
         <div class="table-container">
           <table id="tablaResultados">
@@ -405,14 +351,7 @@
 <script>
 const CONFIG = {
   SMMLV: 1750000, 
-  TOPES_SMMLV: {
-    RANGO_1: 4,
-    RANGO_2: 6,
-    RANGO_3: 19,
-    RANGO_4: 25,
-    MIPYME_LIMITE: 4 
-  },
-
+  TOPES_SMMLV: { RANGO_1: 4, RANGO_2: 6, RANGO_3: 19, RANGO_4: 25, MIPYME_LIMITE: 4 },
   TASAS: {
     NUEVO: {
       "A+":  [66.65, 55.65, 48.60, 45.10, 35.20],
@@ -427,68 +366,51 @@ const CONFIG = {
       "BCC": [73.20, 66.40, 66.40, 66.40, 66.40]
     }
   },
-
-  SEGURO_MICROEMPRESARIO: {
-    TASA_MASCULINO: 27.29362525, // por mil
-    TASA_FEMENINO: 26.23188406,  // por mil
-    TOPE_BASE: 1500000,
-    EDAD_MAXIMA: 70
-  }
-};
-
-const fngTabla = {
-  1:[2.99,3.50,3.75], 2:[2.99,3.50,3.75], 3:[2.99,3.50,3.75], 4:[2.99,3.50,3.75], 5:[2.99,3.50,3.75], 6:[2.99,3.50,3.75],
-  7:[2.99,3.50,3.75], 8:[2.99,3.50,3.75], 9:[2.99,3.50,3.75], 10:[2.99,3.50,3.75], 11:[2.99,3.50,3.75], 12:[2.99,3.50,3.75],
-  13:[3.01,3.52,3.77], 14:[3.03,3.58,3.84], 15:[3.05,3.68,3.94], 16:[3.06,3.80,4.07], 17:[3.08,3.93,4.21], 18:[3.10,4.09,4.38],
-  19:[3.11,4.26,4.56], 20:[3.13,4.44,4.76], 21:[3.15,4.64,4.97], 22:[3.17,4.84,5.18], 23:[3.18,5.05,5.41], 24:[3.20,5.27,5.64],
-  25:[3.22,5.35,5.73], 26:[3.23,5.45,5.83], 27:[3.25,5.56,5.96], 28:[3.27,5.68,6.09], 29:[3.29,5.82,6.24], 30:[3.30,5.97,6.40],
-  31:[3.32,6.13,6.56], 32:[3.34,6.29,6.74], 33:[3.35,6.47,6.93], 34:[3.37,6.65,7.12], 35:[3.39,6.83,7.32], 36:[3.41,7.02,7.53],
-  37:[3.42,7.13,7.63], 38:[3.44,7.24,7.75], 39:[3.46,7.36,7.88], 40:[3.47,7.49,8.02], 41:[3.49,7.62,8.17], 42:[3.51,7.77,8.32],
-  43:[3.53,7.92,8.49], 44:[3.54,8.08,8.66], 45:[3.56,8.24,8.83], 46:[3.58,8.41,9.01], 47:[3.59,8.58,9.20], 48:[3.61,8.76,9.39],
-  49:[3.63,8.87,9.51], 50:[3.65,8.99,9.63], 51:[3.66,9.11,9.76], 52:[3.68,9.24,9.90], 53:[3.70,9.38,10.05], 54:[3.71,9.52,10.20],
-  55:[3.73,9.67,10.36], 56:[3.75,9.82,10.52], 57:[3.77,9.98,10.69], 58:[3.78,10.14,10.86], 59:[3.80,10.30,11.03], 60:[3.82,10.47,11.21]
-};
-
-// Matriz de Factores 100% Auditada y Sincronizada con el Tarifario Oficial
-const factoresSeguroVida = {
-  M: {
-    18:0.377, 19:0.377, 20:0.377, 21:0.383, 22:0.390, 23:0.397, 24:0.404, 25:0.409,
-    26:0.415, 27:0.419, 28:0.426, 29:0.432, 30:0.437, 31:0.444, 32:0.451, 33:0.459,
-    34:0.469, 35:0.479, 36:0.479, 37:0.490, 38:0.502, 39:0.516, 40:0.532, 41:0.547,
-    42:0.565, 43:0.581, 44:0.600, 45:0.620, 46:0.641, 47:0.663, 48:0.693, 49:0.727,
-    50:0.765, 51:0.852, 52:0.909, 53:0.979, 54:1.060, 55:1.155, 56:1.158, 57:1.274,
-    58:1.410, 59:1.562, 60:1.727, 61:2.331, 62:2.542, 63:2.760, 64:2.968, 65:3.177,
-    66:3.382, 67:3.591, 68:3.866, 69:4.116, 70:4.397, 71:4.713, 72:5.068, 73:5.719,
-    74:6.119, 75:6.708, 76:7.520, 77:8.410, 78:9.507, 79:9.899, 80:10.937, 81:10.937,
-    82:10.937, 83:10.937, 84:10.937, 85:10.937
+  SEGURO_MICROEMPRESARIO: { TASA_MASCULINO: 27.29362525, TASA_FEMENINO: 26.23188406, TOPE_BASE: 1500000, EDAD_MAXIMA: 70 },
+  FNG_TABLA: {
+    1:[2.99,3.50,3.75], 2:[2.99,3.50,3.75], 3:[2.99,3.50,3.75], 4:[2.99,3.50,3.75], 5:[2.99,3.50,3.75], 6:[2.99,3.50,3.75],
+    7:[2.99,3.50,3.75], 8:[2.99,3.50,3.75], 9:[2.99,3.50,3.75], 10:[2.99,3.50,3.75], 11:[2.99,3.50,3.75], 12:[2.99,3.50,3.75],
+    13:[3.01,3.52,3.77], 14:[3.03,3.58,3.84], 15:[3.05,3.68,3.94], 16:[3.06,3.80,4.07], 17:[3.08,3.93,4.21], 18:[3.10,4.09,4.38],
+    19:[3.11,4.26,4.56], 20:[3.13,4.44,4.76], 21:[3.15,4.64,4.97], 22:[3.17,4.84,5.18], 23:[3.18,5.05,5.41], 24:[3.20,5.27,5.64],
+    25:[3.22,5.35,5.73], 26:[3.23,5.45,5.83], 27:[3.25,5.56,5.96], 28:[3.27,5.68,6.09], 29:[3.29,5.82,6.24], 30:[3.30,5.97,6.40],
+    31:[3.32,6.13,6.56], 32:[3.34,6.29,6.74], 33:[3.35,6.47,6.93], 34:[3.37,6.65,7.12], 35:[3.39,6.83,7.32], 36:[3.41,7.02,7.53],
+    37:[3.42,7.13,7.63], 38:[3.44,7.24,7.75], 39:[3.46,7.36,7.88], 40:[3.47,7.49,8.02], 41:[3.49,7.62,8.17], 42:[3.51,7.77,8.32],
+    43:[3.53,7.92,8.49], 44:[3.54,8.08,8.66], 45:[3.56,8.24,8.83], 46:[3.58,8.41,9.01], 47:[3.59,8.58,9.20], 48:[3.61,8.76,9.39],
+    49:[3.63,8.87,9.51], 50:[3.65,8.99,9.63], 51:[3.66,9.11,9.76], 52:[3.68,9.24,9.90], 53:[3.70,9.38,10.05], 54:[3.71,9.52,10.20],
+    55:[3.73,9.67,10.36], 56:[3.75,9.82,10.52], 57:[3.77,9.98,10.69], 58:[3.78,10.14,10.86], 59:[3.80,10.30,11.03], 60:[3.82,10.47,11.21]
   },
-  F: {
-    18:0.377, 19:0.377, 20:0.377, 21:0.377, 22:0.377, 23:0.377, 24:0.377, 25:0.383,
-    26:0.383, 27:0.390, 28:0.397, 29:0.404, 30:0.409, 31:0.415, 32:0.419, 33:0.426,
-    34:0.432, 35:0.437, 36:0.444, 37:0.451, 38:0.459, 39:0.469, 40:0.479, 41:0.479,
-    42:0.490, 43:0.502, 44:0.516, 45:0.532, 46:0.547, 47:0.565, 48:0.581, 49:0.600,
-    50:0.620, 51:0.677, 52:0.699, 53:0.731, 54:0.767, 55:0.807, 56:0.852, 57:0.909,
-    58:0.979, 59:1.060, 60:1.155, 61:1.423, 62:1.566, 63:1.733, 64:1.920, 65:2.122,
-    66:2.331, 67:2.542, 68:2.760, 69:2.968, 70:3.177, 71:3.382, 72:3.591, 73:3.866,
-    74:4.116, 75:4.397, 76:4.713, 77:5.347, 78:5.719, 79:6.194, 80:6.788, 81:7.520,
-    82:8.410, 83:9.507, 84:9.899, 85:10.937
+  SEGURO_VIDA_FACTORES: {
+    M: { 
+      18:0.377, 19:0.377, 20:0.377, 21:0.383, 22:0.390, 23:0.397, 24:0.404, 25:0.409, 
+      26:0.415, 27:0.419, 28:0.426, 29:0.432, 30:0.437, 31:0.444, 32:0.451, 33:0.459, 
+      34:0.469, 35:0.479, 36:0.479, 37:0.490, 38:0.502, 39:0.516, 40:0.532, 41:0.547, 
+      42:0.565, 43:0.581, 44:0.600, 45:0.620, 46:0.641, 47:0.663, 48:0.693, 49:0.727, 
+      50:0.765, 51:0.852, 52:0.909, 53:0.979, 54:1.060, 55:1.155, 56:1.158, 57:1.274, 
+      58:1.410, 59:1.562, 60:1.727, 61:2.331, 62:2.542, 63:2.760, 64:2.968, 65:3.177, 
+      66:3.382, 67:3.591, 68:3.866, 69:4.116, 70:4.397, 71:3.068, 72:3.347, 73:3.719, 
+      74:4.194, 75:4.788, 76:5.520, 77:6.410, 78:7.507, 79:8.990, 80:10.937, 81:10.937, 
+      82:10.937, 83:10.937, 84:10.937, 85:10.937 
+    },
+    F: { 
+      18:0.377, 19:0.377, 20:0.377, 21:0.377, 22:0.377, 23:0.377, 24:0.377, 25:0.383, 
+      26:0.383, 27:0.390, 28:0.397, 29:0.404, 30:0.409, 31:0.415, 32:0.419, 33:0.426, 
+      34:0.432, 35:0.437, 36:0.444, 37:0.451, 38:0.459, 39:0.469, 40:0.479, 41:0.479, 
+      42:0.490, 43:0.502, 44:0.516, 45:0.532, 46:0.547, 47:0.565, 48:0.581, 49:0.600, 
+      50:0.620, 51:0.677, 52:0.699, 53:0.731, 54:0.767, 55:0.807, 56:0.852, 57:0.909, 
+      58:0.979, 59:1.060, 60:1.155, 61:1.423, 62:1.566, 63:1.733, 64:1.920, 65:2.122, 
+      66:2.331, 67:2.542, 68:2.760, 69:2.968, 70:3.177, 71:3.382, 72:3.591, 73:3.866, 
+      74:4.116, 75:4.397, 76:3.068, 77:3.347, 78:3.719, 79:4.194, 80:4.788, 81:5.520, 
+      82:6.410, 83:7.507, 84:8.990, 85:10.937 
+    }
   }
 };
 
-function formatoCOP(n){return"$"+Math.round(n).toLocaleString("es-CO");}
-function limpiarNumero(v){return parseInt(String(v||"").replace(/[^\d]/g,""))||0;}
+const formatoCOP = (n) => "$" + Math.round(n).toLocaleString("es-CO");
+const limpiarNumero = (v) => parseInt(String(v || "").replace(/[^\d]/g, "")) || 0;
 
-function toggleDetails() {
-  document.getElementById("infoContainer").classList.toggle("is-open");
-}
-
-function toggleComparativa() {
-  document.getElementById("comparativaContainer").classList.toggle("is-open-comp");
-}
-
-function toggleTabla() {
-  document.getElementById("tablaContainerWrapper").classList.toggle("is-open-table");
-}
+function toggleDetails() { document.getElementById("infoContainer").classList.toggle("is-open"); }
+function toggleComparativa() { document.getElementById("comparativaContainer").classList.toggle("is-open-comp"); }
+function toggleTabla() { document.getElementById("tablaContainerWrapper").classList.toggle("is-open-table"); }
 
 function obtenerIndiceRango(monto) {
   const sm = CONFIG.SMMLV;
@@ -501,40 +423,50 @@ function obtenerIndiceRango(monto) {
 
 function obtenerFngPct(monto, plazo) {
   const sm = CONFIG.SMMLV;
-  let idxColumna = 0;
-  
-  if (monto <= sm * 6) {
-    idxColumna = 0;
-  } else if (monto <= sm * 25) {
-    idxColumna = 1;
-  } else {
-    idxColumna = 2;
-  }
-
+  const idxColumna = monto <= sm * 6 ? 0 : (monto <= sm * 25 ? 1 : 2);
   const plazoAjustado = Math.min(Math.max(plazo, 1), 60);
-  return fngTabla[plazoAjustado] ? fngTabla[plazoAjustado][idxColumna] : 0;
+  return CONFIG.FNG_TABLA[plazoAjustado]?.[idxColumna] || 0;
 }
 
-function obtenerTasa(tipo, perfil, monto) {
-  return CONFIG.TASAS[tipo][perfil][obtenerIndiceRango(monto)];
+function obtenerTasaYMipyme(monto) {
+  const modo = document.getElementById("modoCalculo").value;
+
+  if (modo === "MANUAL") {
+    const tea = parseFloat(document.getElementById("tasaManual").value) || 0;
+    const llevaPyme = document.getElementById("pymeManual").value === "SI";
+    let pctMipyme = 0;
+
+    if (llevaPyme && monto > 0) {
+      const sm = CONFIG.SMMLV;
+      pctMipyme = (monto <= (sm * CONFIG.TOPES_SMMLV.MIPYME_LIMITE)) ? 0.006045 : 0.003675;
+    }
+
+    return { tea, pctMipyme };
+  } else {
+    const tipo = document.getElementById("tipoCliente").value;
+    const perfil = document.getElementById("perfil").value;
+    const tea = CONFIG.TASAS[tipo][perfil][obtenerIndiceRango(monto)];
+    let pctMipyme = 0;
+
+    if (!(tipo === "ANTIGUO" && perfil === "A+") && monto > 0) {
+      const sm = CONFIG.SMMLV;
+      if (monto <= (sm * CONFIG.TOPES_SMMLV.MIPYME_LIMITE)) pctMipyme = 0.006045;
+      else if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_4)) pctMipyme = 0.003675;
+    }
+
+    return { tea, pctMipyme };
+  }
 }
 
-function obtenerPctMipyme(monto, tipo, perfil) {
-  if (tipo === "ANTIGUO" && perfil === "A+") return 0;
-  const sm = CONFIG.SMMLV;
-  if (monto <= (sm * CONFIG.TOPES_SMMLV.MIPYME_LIMITE)) return 0.006045;
-  if (monto <= (sm * CONFIG.TOPES_SMMLV.RANGO_4)) return 0.003675;
-  return 0;
+function calcularCuotaBaseFrancesa(monto, tem, plazo) {
+  return monto * (tem / (1 - Math.pow(1 + tem, -plazo)));
 }
 
-// Lógica Estándar de Edad Ponderada: Math.ceil(edad + (plazo / 24))
 function calcularSeguroVidaObligatorio(monto, genero, edad, plazo) {
   if (!monto || !plazo) return 0;
-  
   const edadPonderada = Math.ceil(edad + (plazo / 24));
   const edadClave = Math.min(Math.max(edadPonderada, 18), 85);
-  
-  const factorBase = (genero === "M" ? factoresSeguroVida.M[edadClave] : factoresSeguroVida.F[edadClave]) || 0.377;
+  const factorBase = CONFIG.SEGURO_VIDA_FACTORES[genero]?.[edadClave] || 0.377;
   return Math.round(monto * (factorBase / 1000));
 }
 
@@ -545,28 +477,44 @@ function calcularSeguroVoluntario(cuotaBaseCompleta, acepta, genero, edad) {
   return base * (tasaPorMil / 1000);
 }
 
-function calcularPrimeraCuotaAux(m, pl, t, p, g, e, aceptaSeg) {
+function calcularPrimeraCuotaAux(m, pl, g, e, aceptaSeg) {
   if (!m || !pl) return 0;
-  const tea = obtenerTasa(t, p, m);
+  const { tea, pctMipyme } = obtenerTasaYMipyme(m);
+  if (!tea || tea <= 0) return 0;
+
   const tem = Math.pow(1 + tea/100, 1/12) - 1;
-  const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
-  const pctMipyme = obtenerPctMipyme(m, t, p);
-  
+  const cuotaBase = calcularCuotaBaseFrancesa(m, tem, pl);
   const seguroMensualVida = calcularSeguroVidaObligatorio(m, g, e, pl);
-  
   const mipymeMes1 = m * (pctMipyme * 1.19);
   const cuotaCreditoBase = cuotaBase + mipymeMes1 + seguroMensualVida;
-  const primaSeguroVol = calcularSeguroVoluntario(cuotaCreditoBase, aceptaSeg, g, e);
-
-  return cuotaCreditoBase + primaSeguroVol;
+  return cuotaCreditoBase + calcularSeguroVoluntario(cuotaCreditoBase, aceptaSeg, g, e);
 }
 
-(function(){
-  const elEdad=document.getElementById("edad");
-  for(let a=18;a<=85;a++){
-    const o=document.createElement("option"); o.value=a; o.textContent=a;
-    if(a===30)o.selected=!0; elEdad.appendChild(o);
+function alternarModoCalculo() {
+  const modo = document.getElementById("modoCalculo").value;
+  const autos = document.querySelectorAll(".modo-auto");
+  const manuales = document.querySelectorAll(".modo-manual");
+
+  if (modo === "MANUAL") {
+    autos.forEach(el => el.classList.add("hidden"));
+    manuales.forEach(el => el.classList.remove("hidden"));
+  } else {
+    autos.forEach(el => el.classList.remove("hidden"));
+    manuales.forEach(el => el.classList.add("hidden"));
   }
+}
+
+(function populateEdadOptions(){
+  const elEdad = document.getElementById("edad");
+  const fragment = document.createDocumentFragment();
+  for(let a=18; a<=85; a++){
+    const o = document.createElement("option"); 
+    o.value = a; 
+    o.textContent = a;
+    if(a === 30) o.selected = true; 
+    fragment.appendChild(o);
+  }
+  elEdad.appendChild(fragment);
 })();
 
 function seleccionarPlazoRapido(nuevoPlazo) {
@@ -575,73 +523,54 @@ function seleccionarPlazoRapido(nuevoPlazo) {
 }
 
 function calcularYRenderizar(){
-  const t=document.getElementById("tipoCliente").value, 
-        p=document.getElementById("perfil").value, 
-        m=limpiarNumero(document.getElementById("monto").value), 
-        pl=parseInt(document.getElementById("plazo").value)||0, 
-        g=document.getElementById("genero").value, 
-        e=parseInt(document.getElementById("edad").value)||0,
+  const m = limpiarNumero(document.getElementById("monto").value), 
+        pl = parseInt(document.getElementById("plazo").value) || 0, 
+        g = document.getElementById("genero").value, 
+        e = parseInt(document.getElementById("edad").value) || 0,
         aceptaSeg = document.getElementById("aceptaSeguro").value;
 
   const elAlerta = document.getElementById("alertaEdad");
-  if(aceptaSeg === "SI" && e >= CONFIG.SEGURO_MICROEMPRESARIO.EDAD_MAXIMA) {
-    elAlerta.style.display = "flex";
-  } else {
-    elAlerta.style.display = "none";
-  }
+  elAlerta.style.display = (aceptaSeg === "SI" && e >= CONFIG.SEGURO_MICROEMPRESARIO.EDAD_MAXIMA) ? "flex" : "none";
 
-  if(!m || !pl){
+  const { tea, pctMipyme } = obtenerTasaYMipyme(m);
+
+  // Ocultar componentes si falta Monto, Plazo o la Tasa no es mayor a 0
+  if(!m || !pl || !tea || tea <= 0){
     document.getElementById("comparativaContainer").style.display="none";
     document.getElementById("infoContainer").style.display="none";
     document.getElementById("tablaContainerWrapper").style.display="none";
     return;
   }
 
-  // Renderizar Plazos en Comparativa
+  // Renderizar Comparativa de Plazos
   const plazosComparativa = [6, 12, 18, 24, 30, 36, 48, 60];
   const gridComp = document.getElementById("comparativaGrid");
-  gridComp.innerHTML = "";
-
-  plazosComparativa.forEach(pMeses => {
-    const cuotaComp = calcularPrimeraCuotaAux(m, pMeses, t, p, g, e, aceptaSeg);
-    const card = document.createElement("div");
-    card.className = `comparativa-card ${pMeses === pl ? 'selected' : ''}`;
-    card.onclick = (event) => {
-      event.stopPropagation();
-      seleccionarPlazoRapido(pMeses);
-    };
-    card.innerHTML = `
-      <div class="comparativa-plazo">${pMeses} Meses</div>
-      <div class="comparativa-cuota">${formatoCOP(cuotaComp)}</div>
+  
+  gridComp.innerHTML = plazosComparativa.map(pMeses => {
+    const cuotaComp = calcularPrimeraCuotaAux(m, pMeses, g, e, aceptaSeg);
+    return `
+      <button type="button" class="comparativa-card ${pMeses === pl ? 'selected' : ''}" onclick="seleccionarPlazoRapido(${pMeses})">
+        <div class="comparativa-plazo">${pMeses} Meses</div>
+        <div class="comparativa-cuota">${formatoCOP(cuotaComp)}</div>
+      </button>
     `;
-    gridComp.appendChild(card);
-  });
+  }).join("");
+
   document.getElementById("comparativaContainer").style.display="block";
 
-  // Cálculo Amortización Detallada
-  const tea = obtenerTasa(t, p, m);
+  // Amortización Detallada
   const tem = Math.pow(1 + tea/100, 1/12) - 1;
-  const cuotaBase = m * (tem / (1 - Math.pow(1 + tem, -pl)));
-  const pctMipyme = obtenerPctMipyme(m, t, p);
-  
-  // Seguro Obligatorio de Vida Fijo
+  const cuotaBase = calcularCuotaBaseFrancesa(m, tem, pl);
   const seguroMensualVida = calcularSeguroVidaObligatorio(m, g, e, pl);
-  
-  // Primera MIPYME
   const primeraMipymeMes = m * (pctMipyme * 1.19);
   const cuotaCreditoObligatoria1 = cuotaBase + primeraMipymeMes + seguroMensualVida;
-  
-  // Seguro Voluntario Fijo
   const primaVoluntariaFija = calcularSeguroVoluntario(cuotaCreditoObligatoria1, aceptaSeg, g, e);
 
-  let saldo = m;
-  let baseMipymeAnual = m;      
-  let proximaBaseMipyme = m;    
+  let saldo = m, baseMipymeAnual = m, proximaBaseMipyme = m;
   let totalCuota = 0, totalCapital = 0, totalInteres = 0, totalMipyme = 0, totalSeguroVida = 0, totalSeguroVol = 0;
   let primeraCuotaFinal = 0;
 
-  const tbody = document.querySelector("#tablaResultados tbody");
-  tbody.innerHTML = "";
+  const filasHTML = [];
 
   for(let i=1; i<=pl; i++){
     if (i > 1 && (i - 1) % 12 === 0) {
@@ -651,9 +580,8 @@ function calcularYRenderizar(){
     const interes = saldo * tem;
     const capital = (i === pl) ? saldo : (cuotaBase - interes);
     const mipymeMes = baseMipymeAnual * (pctMipyme * 1.19);
-    
     const seguroVidaCuota = (i <= pl) ? seguroMensualVida : 0;
-    const cuotaTotalMes = (capital + interes) + mipymeMes + seguroVidaCuota + primaVoluntariaFija;
+    const cuotaTotalMes = capital + interes + mipymeMes + seguroVidaCuota + primaVoluntariaFija;
     
     if(i === 1) primeraCuotaFinal = cuotaTotalMes;
 
@@ -664,9 +592,18 @@ function calcularYRenderizar(){
     totalSeguroVida += seguroVidaCuota;
     totalSeguroVol += primaVoluntariaFija;
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${i}</td><td>${formatoCOP(cuotaTotalMes)}</td><td>${formatoCOP(capital)}</td><td>${formatoCOP(interes)}</td><td>${formatoCOP(mipymeMes)}</td><td>${formatoCOP(seguroVidaCuota)}</td><td>${formatoCOP(primaVoluntariaFija)}</td><td>${formatoCOP(Math.max(0, saldo-capital))}</td>`;
-    tbody.appendChild(tr);
+    filasHTML.push(`
+      <tr>
+        <td style="text-align:left">${i}</td>
+        <td>${formatoCOP(cuotaTotalMes)}</td>
+        <td>${formatoCOP(capital)}</td>
+        <td>${formatoCOP(interes)}</td>
+        <td>${formatoCOP(mipymeMes)}</td>
+        <td>${formatoCOP(seguroVidaCuota)}</td>
+        <td>${formatoCOP(primaVoluntariaFija)}</td>
+        <td>${formatoCOP(Math.max(0, saldo - capital))}</td>
+      </tr>
+    `);
     
     saldo -= capital;
 
@@ -675,9 +612,11 @@ function calcularYRenderizar(){
     }
   }
 
+  document.querySelector("#tablaResultados tbody").innerHTML = filasHTML.join("");
+
   // Actualizar UI
   document.getElementById("infoContainer").style.display="block";
-  document.getElementById("labelCuotaPlazo").textContent = `Cuota Estimada del Credito`;
+  document.getElementById("labelCuotaPlazo").textContent = `💰 Primera Cuota Aprox. (${pl} Meses)`;
   document.getElementById("cuotaFija").textContent = formatoCOP(primeraCuotaFinal);
   document.getElementById("tasaTEA").textContent = `${tea.toFixed(2)}% E.A. - ${(tem*100).toFixed(2)}% Mes`;
   document.getElementById("aplicaMipyme").textContent = `${(pctMipyme*100).toFixed(4)}% Mes`;
@@ -692,14 +631,23 @@ function calcularYRenderizar(){
   document.getElementById("tablaContainerWrapper").style.display="block";
 }
 
-document.querySelectorAll("input, select").forEach(el => {
-  el.addEventListener("input", (e) => {
-    if(e.target.id === "monto"){
-      const v = limpiarNumero(e.target.value);
-      e.target.value = v ? formatoCOP(v) : "";
-    }
-    calcularYRenderizar();
-  });
+// Delegación de Eventos
+document.getElementById("form").addEventListener("input", (e) => {
+  if (e.target.id === "modoCalculo") {
+    alternarModoCalculo();
+  }
+  if (e.target.id === "monto") {
+    const v = limpiarNumero(e.target.value);
+    e.target.value = v ? formatoCOP(v) : "";
+  }
+  calcularYRenderizar();
+});
+
+document.getElementById("form").addEventListener("change", (e) => {
+  if (e.target.id === "modoCalculo") {
+    alternarModoCalculo();
+  }
+  calcularYRenderizar();
 });
 </script>
 </body>

@@ -202,6 +202,15 @@
   th, td { padding:10px 10px; text-align:right; font-size:0.82rem; border-bottom: 1px solid #f1f5f9; }
   thead th { background: var(--primary); color:#fff; font-weight: 600; }
   tfoot td { background: #f8fafc; font-weight: 800; color: var(--primary-dark); border-top: 2px solid var(--blue-border); }
+
+  footer {
+    text-align: center;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+  }
 </style>
 </head>
 <body>
@@ -300,7 +309,7 @@
         <div class="detail-item"><strong>Comisión MIPYME (Mes 1)</strong><span id="aplicaMipyme"></span></div>
         <div class="detail-item"><strong>FNG Estimado</strong><span id="fngValue"></span></div>
         <div class="detail-item"><strong>MicroEmp. Protegido (Mes)</strong><span id="seguroVoluntarioInfo"></span></div>
-        <div class="detail-item"><strong>Costo Total Intereses</strong><span id="totalInteresInfo"></span></div>
+        <div class="detail-item"><strong>Costo Total Crédito</strong><span id="totalCreditoInfo"></span></div>
         <div class="detail-item"><strong>Total Seguro Vol. (Crédito)</strong><span id="totalSeguroVolInfo"></span></div>
       </div>
     </div>
@@ -319,7 +328,7 @@
     <!-- Bloque 3: Tabla de Amortización -->
     <div class="table-collapsible-container" id="tablaContainerWrapper" style="display:none;">
       <button type="button" class="table-header" onclick="toggleTabla()">
-        <span class="table-title">📊 Proyeccion de Pagos</span>
+        <span class="table-title">📊 Proyección de Pagos</span>
         <svg class="toggle-icon-table" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
       </button>
       <div class="table-body-wrapper" id="tablaBodyWrapper">
@@ -534,7 +543,6 @@ function calcularYRenderizar(){
 
   const { tea, pctMipyme } = obtenerTasaYMipyme(m);
 
-  // Ocultar componentes si falta Monto, Plazo o la Tasa no es mayor a 0
   if(!m || !pl || !tea || tea <= 0){
     document.getElementById("comparativaContainer").style.display="none";
     document.getElementById("infoContainer").style.display="none";
@@ -542,7 +550,6 @@ function calcularYRenderizar(){
     return;
   }
 
-  // Renderizar Comparativa de Plazos
   const plazosComparativa = [6, 12, 18, 24, 30, 36, 48, 60];
   const gridComp = document.getElementById("comparativaGrid");
   
@@ -558,7 +565,6 @@ function calcularYRenderizar(){
 
   document.getElementById("comparativaContainer").style.display="block";
 
-  // Amortización Detallada
   const tem = Math.pow(1 + tea/100, 1/12) - 1;
   const cuotaBase = calcularCuotaBaseFrancesa(m, tem, pl);
   const seguroMensualVida = calcularSeguroVidaObligatorio(m, g, e, pl);
@@ -614,14 +620,13 @@ function calcularYRenderizar(){
 
   document.querySelector("#tablaResultados tbody").innerHTML = filasHTML.join("");
 
-  // Actualizar UI
   document.getElementById("infoContainer").style.display="block";
   document.getElementById("labelCuotaPlazo").textContent = `💰 Primera Cuota Aprox. (${pl} Meses)`;
   document.getElementById("cuotaFija").textContent = formatoCOP(primeraCuotaFinal);
   document.getElementById("tasaTEA").textContent = `${tea.toFixed(2)}% E.A. - ${(tem*100).toFixed(2)}% Mes`;
   document.getElementById("aplicaMipyme").textContent = `${(pctMipyme*100).toFixed(4)}% Mes`;
   document.getElementById("seguroVoluntarioInfo").textContent = formatoCOP(primaVoluntariaFija);
-  document.getElementById("totalInteresInfo").textContent = formatoCOP(totalInteres);
+  document.getElementById("totalCreditoInfo").textContent = formatoCOP(totalCuota - m);
   document.getElementById("totalSeguroVolInfo").textContent = formatoCOP(totalSeguroVol);
 
   const fngPct = obtenerFngPct(m, pl);
@@ -631,7 +636,6 @@ function calcularYRenderizar(){
   document.getElementById("tablaContainerWrapper").style.display="block";
 }
 
-// Delegación de Eventos
 document.getElementById("form").addEventListener("input", (e) => {
   if (e.target.id === "modoCalculo") {
     alternarModoCalculo();
